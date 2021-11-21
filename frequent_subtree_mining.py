@@ -49,7 +49,7 @@ def build_canonical_representations(tree, tree_ind, parent=0):
     return new_rep
 
 
-# Build dataset
+# Simulate dataset
 trees = [nx.random_tree(M, create_using=nx.DiGraph) for i in range(N)]
 
 # Get bottom-up subtrees
