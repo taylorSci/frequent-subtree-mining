@@ -8,8 +8,10 @@ import pandas as pd
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 import matplotlib.pyplot as plt
+import plotnine as pn
+from plotnine import ggplot, aes
 
-N = 10  # Number of trees in simulation
+N = 1000  # Number of trees in simulation
 M = 30  # Number of nodes in trees
 MIN_SUBTREE_SIZE = 3  # Minimum number of nodes in subtrees
 MIN_SUBTREE_FREQ = 2  # Minimum frequency of subtree
@@ -27,20 +29,6 @@ def collect_descendants(tree, node):
         for nextNode in tree.succ[currentNode].keys():
             searching.append(nextNode)
     return list(nodes)
-
-
-# def collect_leaves(tree):
-#     """Return all the leaves of a tree."""
-#     leaves = set()
-#     for node, neighbors in tree.adj.items():
-#         if not len(neighbors):
-#             leaves.add(node)
-#     return leaves
-
-
-# def build_canonical_representation(leaves):
-#     """Return string representations of the unlabeled subtree structures."""
-#     reps = ['()']*len(leaves)
 
 
 def build_canonical_representations(tree, tree_ind, parent=0):
@@ -75,6 +63,8 @@ subtrees = grouped.agg(frequency=('can_rep', 'count'), sources=('subtree_loc', l
 subtrees = subtrees[subtrees['frequency'] >= MIN_SUBTREE_FREQ]
 subtrees['size'] = (subtrees['can_rep'].str.len()//2)
 subtrees.sort_values('size', inplace=True, ignore_index=True)
+
+# Plot figures
 biggest_locs = subtrees['sources'].iloc[-1]
 for tree_ind, node_ind in biggest_locs:
     containing_tree = trees[tree_ind]
@@ -82,5 +72,17 @@ for tree_ind, node_ind in biggest_locs:
     colors = np.full(M, '#1f78b4')
     subtree_nodes = collect_descendants(containing_tree, node_ind)
     colors[subtree_nodes] = '#ff0000'
-    nx.draw(containing_tree, pos=pos, node_color=colors)
+    plt.figure()
+    ax = plt.gca()
+    ax.set_title(f"Largest bottom-up subtree: tree {tree_ind}\n({N} trees of size {M})")
+    nx.draw(containing_tree, pos=pos, node_color=colors, ax=ax, node_size=100)
     plt.show()
+max_size = subtrees['size'].iloc[-1]
+(
+    ggplot(subtrees, aes(x='size', y='frequency')) +
+    pn.geom_point() +
+    pn.ggtitle(f"Subtree frequency distribution by size\n({N} trees of size {M})") +
+    pn.labs(x="Subtree size", y="Absolute frequency") +
+    pn.scale_x_discrete(limits=range(1, max_size+1)) +
+    pn.scale_y_log10()
+).draw(show=True)
