@@ -1,1 +1,3 @@
-# frequent_subtree_mining
+# frequent-subtree-mining
+
+Mini-lecture delivered for class.
